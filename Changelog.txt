@@ -1,0 +1,2 @@
+v1.0 - December 11th, 2017
+o Initial Release of the mod
