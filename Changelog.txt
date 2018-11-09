@@ -1,3 +1,7 @@
+v1.1 - December 23rd, 2017
+o Fixed issue showing/hiding proper links within the JavaScript code.
+o Fixed database insertion issue within [b]Subs-YASM.php[/b] code.
+
 v1.0.1 - December 17th, 2017
 o Added forgotten Changelog and Off-Topic bbcode button images.
 o Removed code to add Font-Awesome, since no portion is used by the mod.
@@ -6,7 +10,7 @@ o Added automatic log ID adding to posts if logging is requested by OP.
 o Fixed code so that spoiler contents aren't revealed to guests if so requested.
 o Generalized configuration strings in language file, per SMF Customization Team.
 o Added setting to limit logs retrieved to admin-set number of recent members.
-o UNIMPLEMENTED: Added function for automatically adding log ID if logging is requested by admin.
+o UNIMPLEMENTED: Added preparser for automatically adding log ID if logging is requested by admin.
 
 v1.0 - December 11th, 2017
 o Initial Release of the mod

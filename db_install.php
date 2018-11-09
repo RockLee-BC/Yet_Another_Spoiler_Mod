@@ -16,12 +16,6 @@ if (file_exists($sourcedir . '/Subs-BBCode-Spoiler.php'))
 // Build the bbcodes table:
 $columns = array(
 	array(
-		'name' => 'id_msg',
-		'type' => 'int',
-		'size' => 8,
-		'unsigned' => true,
-	),
-	array(
 		'name' => 'id_member',
 		'type' => 'int',
 		'size' => 8,
@@ -41,6 +35,16 @@ $columns = array(
 	),
 );
 $smcFunc['db_create_table']('{db_prefix}log_viewed_tag', $columns, array(), array(), 'update_remove');
+$smcFunc['db_add_column'](
+	'{db_prefix}log_viewed_tag', 
+	array(
+		'name' => 'id_msg', 
+		'size' => 8, 
+		'type' => 'int', 
+		'null' => false, 
+		'default' => 0
+	)
+);
 
 // Echo that we are done if necessary:
 if (SMF == 'SSI')

@@ -6,10 +6,12 @@ var YASM_viewed = [0];
 function YASM_toggle(element, log)
 {
 	// Hide or show the spoiler area & links of this bbcode:
-	var div2 = element.parentNode.parentNode.getElementsByTagName('div')[1].getElementsByTagName('div')[0];
+	var div1 = element.parentNode.parentNode;
+	var div2 = div1.getElementsByTagName('div')[1].getElementsByTagName('div')[0];
 	var hidden = (div2.style.display != '');
 	div2.style.display = (hidden ? '' : 'none');
-	var links = element.parentNode.getElementsByTagName('a');
+	var div3 = div1.getElementsByClassName('YASM_links');
+	var links = div3[0].getElementsByTagName('a');
 	links[0].style.display = (!hidden ? '' : 'none');
 	links[1].style.display = (hidden ? '' : 'none');
 

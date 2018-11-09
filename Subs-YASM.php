@@ -319,7 +319,7 @@ function YASM_Add_Member($log_id = -1, $id_member = -1, $is_action = true, $msg_
 	// Insert user ID and spoiler ID into the table:
 	$smcFunc['db_insert']('',
 		'{db_prefix}log_viewed_tag',
-		array('id_member' => 'int', 'id_spoiler' => 'int', 'time' => 'int', 'id_msg'),
+		array('id_member' => 'int', 'id_spoiler' => 'int', 'time' => 'int', 'id_msg' => 'int'),
 		array((int) $id_member, (int) $log_id, time(), (int) $msg_id),
 		array()
 	);
