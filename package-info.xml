@@ -5,43 +5,53 @@
 	<id>Dougiefresh:YASM</id>
 	<name>Yet Another Spoiler Mod</name>
 	<type>modification</type>
-	<version>1.0</version>
+	<version>1.0.1</version>
 
 	<install for="2.0 - 2.0.99">
 		<readme parsebbc="true">readme.txt</readme>
+		<database>db_install.php</database>
 		<code>add_remove_hooks.php</code>
-		<code>db_install.php</code>
+		<modification>install_20x.xml</modification>
 		<require-file name="Subs-YASM.php" destination="$sourcedir" />
 		<require-file name="YASM.english.php" destination="$languagedir" />
 		<require-file name="YASM.css" destination="$themedir/css" />
 		<require-file name="YASM.js" destination="$themedir/scripts" />
+		<require-file name="changelog.gif" destination="$imagesdir/bbc" />
+		<require-file name="offtopic.gif" destination="$imagesdir/bbc" />
 		<require-file name="spoiler.gif" destination="$imagesdir/bbc" />
 	</install>
 	<uninstall for="2.0 - 2.0.99">
 		<code>add_remove_hooks.php</code>
+		<modification reverse="true">install_20x.xml</modification>
 		<remove-file name="$sourcedir/Subs-YASM.php" />		
 		<remove-file name="$languagedir/YASM.english.php" />		
-		<remove-file name="$imagesdir/bbc/spoiler.gif" />
 		<remove-file name="$themedir/css/YASM.css" />
 		<remove-file name="$themedir/scripts/YASM.js" />
+		<remove-file name="$imagesdir/bbc/changelog.gif" />
+		<remove-file name="$imagesdir/bbc/offtopic.gif" />
+		<remove-file name="$imagesdir/bbc/spoiler.gif" />
 	</uninstall>
 
 	<install for="2.1 Beta 1 - 2.1.99">
 		<readme parsebbc="true">readme.txt</readme>
+		<database>db_install.php</database>
 		<code>add_remove_hooks.php</code>
-		<code>db_install.php</code>
 		<require-file name="YASM.english.php" destination="$languagedir" />
 		<require-file name="Subs-YASM.php" destination="$sourcedir" />
 		<require-file name="YASM.css" destination="$themedir/css" />
 		<require-file name="YASM.js" destination="$themedir/scripts" />
+		<require-file name="changelog.png" destination="$imagesdir/bbc" />
+		<require-file name="offtopic.png" destination="$imagesdir/bbc" />
 		<require-file name="spoiler.png" destination="$imagesdir/bbc" />
 	</install>
 	<uninstall for="2.1 Beta 1 - 2.1.99">
 		<code>add_remove_hooks.php</code>
 		<remove-file name="$sourcedir/Subs-YASM.php" />		
-		<remove-file name="$imagesdir/bbc/spoiler.png" />
 		<remove-file name="$languagedir/YASM.english.php" />		
 		<remove-file name="$themedir/css/YASM.css" />
 		<remove-file name="$themedir/scripts/YASM.js" />
+		<remove-file name="$imagesdir/bbc/changelog.png" />
+		<remove-file name="$imagesdir/bbc/offtopic.png" />
+		<remove-file name="$imagesdir/bbc/spoiler.png" />
 	</uninstall>
 </package-info>

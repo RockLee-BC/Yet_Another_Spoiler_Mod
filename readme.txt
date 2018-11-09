@@ -1,5 +1,5 @@
 [hr]
-[center][color=red][size=16pt][b]YET ANOTHER SPOILER MOD v1.0[/b][/size][/color]
+[center][color=red][size=16pt][b]YET ANOTHER SPOILER MOD v1.0.1[/b][/size][/color]
 [url=http://www.simplemachines.org/community/index.php?action=profile;u=253913][b]By Dougiefresh[/b][/url] -> [url=http://custom.simplemachines.org/mods/index.php?mod=4166]Link to Mod[/url]
 [/center]
 [hr]
@@ -25,13 +25,15 @@ o [b]log_id[/b] - [b]DO NOT EDIT![/b]  Automatically replaces [b]log[/b] paramet
 
 [color=blue][b][size=12pt][u]Admin Settings[/u][/size][/b][/color]
 Each bbcode has settings in [b]Admin[/b] => [b]Configuration[/b] => [b]Modification Settings[/b] => [b]YASM[/b]:
-o [b][i](tag)[/i] style to use:[/b]
-o [b]Replace button text "[i](tag text)[/i]" with:[/b]
+o [b][i]{tag_name}[/i] style to use:[/b]
+o [b]Replace button text "[i]{tag_name}[/i]" with:[/b]
 o [b]Replace button text "Show" with:[/b]
 o [b]Replace button text "Hide" with:[/b]
 o [b]Default to expanded status?[/b]
-o [b]Disable [i](tag)[/i] for guests globally?[/b]
-o [b]Disable line beneath [i](tag text)[/i] text?[/b]
+o [b]Disable [i]{tag_name}[/i] for guests globally?[/b]
+o [b]Disable line beneath [i]{tag_name}[/i] text?[/b]
+o [b]Show which members viewed the [i]{tag_name}[/i]?[/b]
+o [b]Number of members to show that viewed the {tag_name}[/b]
 
 These BBCodes may be disabled by going into the [b]Admin[/b] => [b]Forum[/b] => [b]Posts and Topics[/b] => [b]Bulletin Board Code[/b] and unchecking the bbcodes you don't want to use.  You may also be uninstall this mod in order to disable them.
 
@@ -41,7 +43,7 @@ o [url=http://custom.simplemachines.org/mods/index.php?mod=3980]Expanding & Coll
 o [url=http://custom.simplemachines.org/mods/index.php?mod=3990]Expanding & Collapsing Off-Topic Tag[/url]
 o [url=http://custom.simplemachines.org/mods/index.php?mod=3981]Expanding & Collapsing Spoiler Tag[/url]
 
-These mods should be removed prior to installation of this mod.  I will not be supporting those mods once this mod is approved!  Furthermore, I will [b]NOT[/b] provide support for this mod if any of specified mods are installed along side this one!
+These mods [b]NEED TO BE[/b] removed prior to installation of this mod, as the installer will not permit this mod to be installed alongside those mods!  I will not be supporting those mods once this mod is approved!
 
 [color=blue][b][size=12pt][u]Compatibility Notes[/u][/size][/b][/color]
 This mod was tested on SMF 2.0.15, but should work on SMF 2.1 Beta 3, as well as SMF 2.0 and up.  SMF 1.x is not and will not be supported.

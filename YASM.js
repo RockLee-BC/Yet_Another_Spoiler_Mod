@@ -1,6 +1,8 @@
 /******************************************************************
 /* Javascript for Yet Another Spoiler Mod
 /*****************************************************************/
+var YASM_viewed = [0];
+
 function YASM_toggle(element, log)
 {
 	// Hide or show the spoiler area & links of this bbcode:
@@ -17,16 +19,20 @@ function YASM_toggle(element, log)
 
 function YASM_log(log)
 {
+	// C'mon!  Make sure we're trying to log a valid spoiler!
 	if (log > 0)
 	{
-		var ajax =  new XMLHttpRequest();
-		ajax.open('GET', smf_scripturl + '?action=YASM_log;id=' + log, true);
-		ajax.onreadystatechange = function()
+		// Have we logged it this page load?
+		var idx = YASM_viewed.indexOf(log);
+		if (idx = -1)
 		{
-			if (ajax.readyState == 4 && ajax.status == 200)
-			{
-			}
+			// Send the AJAX request to load the spoiler read:
+			var ajax =	new XMLHttpRequest();
+			ajax.open('GET', smf_scripturl + '?action=YASM_log;id=' + log, true);
+			ajax.send();
+
+			// Add this spoiler log to the list to prevent unnecessary calls:
+			YASM_viewed.push(log);
 		}
-		ajax.send();
 	}
 }

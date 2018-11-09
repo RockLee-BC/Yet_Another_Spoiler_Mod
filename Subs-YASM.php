@@ -13,7 +13,7 @@ if (!defined('SMF'))
 	die('Hacking attempt...');
 
 /**********************************************************************************
-/* Hook that handles necessary CSS loading:
+/* Hooks that deal with mod setup and user deletion:
 **********************************************************************************/
 function YASM_Load()
 {
@@ -22,16 +22,30 @@ function YASM_Load()
 	// Get our language strings!
 	loadLanguage('YASM');
 
-	// Include our CSS and JS in the header:
-	$context['html_headers'] .= '
-	<script type="text/javascript" src="' . $settings['default_theme_url'] . '/scripts/YASM.js?fin20"></script>
-	<link rel="stylesheet" type="text/css" href="' . $settings['default_theme_url'] . '/css/YASM.css" />';
-
-	// Include Font-Awesome in the header, only if not already present:
-	if (strpos($context['html_headers'], 'font-awesome') === false)
+	// Are we running SMF 2.1 or 2.0.x?  Makes a difference, ya know.... :p
+	if (function_exists('loadCSSFile'))
+	{
+		// SMF 2.1: Include our CSS and JS in the header....
+		loadJavaScriptFile('YASM.js', array(), 'YASM');
+		loadCSSFile('YASM.css', array(), 'YASM');
+	}
+	else
+	{
+		// SMF 2.0: Include our CSS and JS in the header....
 		$context['html_headers'] .= '
-	<!--FontAwesome-->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.0/css/font-awesome.min.css">';
+		<script type="text/javascript" src="' . $settings['default_theme_url'] . '/scripts/YASM.js?fin20"></script>
+		<link rel="stylesheet" type="text/css" href="' . $settings['default_theme_url'] . '/css/YASM.css" />';
+	}
+}
+
+function YASM_Actions(&$is_actions)
+{
+	$is_actions['YASM_log'] = array('Subs-YASM.php', 'YASM_Add_Member');
+}
+
+function YASM_Delete_user($id_member)
+{
+	YASM_Delete_Spoilers($id_members);
 }
 
 /**********************************************************************************
@@ -79,7 +93,7 @@ function YASM_BBCode(&$bbc)
 			'disallow_children' => $disallowed,
 			'block-level' => true,
 		);
-		$tmp = $bbc[] = array(
+		$bbc[] = array(
 			'tag' => $tag,
 			'type' => 'unparsed_content',
 			'content' => $content_empty,
@@ -125,7 +139,7 @@ function YASM_Validate_Equals(&$tag, &$data, &$disabled)
 
 function YASM_Validate(&$tag, &$data, &$disabled)
 {
-	global $txt, $user_info, $modSettings, $smcFunc;
+	global $txt, $user_info, $modSettings, $smcFunc, $context, $scripturl;
 
 	// Are the contents empty?  Then don't show anything to the user:
 	if (empty($data))
@@ -133,56 +147,78 @@ function YASM_Validate(&$tag, &$data, &$disabled)
 
 	// Parse the parameters given to us by the poster:
 	$name = &$tag['tag'];
-	list($text, $quote, $show, $hide, $guests, $expand,, $log) = explode('|', $tag['content']);
+	list($text, $quote, $show, $hide, $guests, $expand,, $log_id) = explode('|', $tag['content']);
 
 	// If guests aren't allowed to view, then tell the user to login or register:
 	if ((!empty($modSettings['YASM_' . $name . '_no_guests']) || $guests == 'n' || $guests == 'no' || $guests == 'false') && !empty($user_info['is_guest']))
-		$message = $txt['YASM_' . $name . '_no_guest_html'];
-	// If the membergroup isn't allowed to view, then tell the user can't view:
-	//elseif (!allowedTo('view_' . $name . '_tag'))
-	//	$message = $txt['YASM_' . $name . '_no_guest_html'];
+	{
+		$search = array('{script_url}', '{tag_name}');
+		$replace = array($scripturl, $txt[$name]);
+		$message = str_replace($search, $replace, $txt['YASM_strings']['no_guest_html']);
+	}
+	// Otherwise.....
 	else
 	{
 		// Parse the parameters given to us:
+		$quote = $quote;
 		$text = empty($text) ? (empty($modSettings['YASM_' . $name . '_text']) ? $txt[$name] : stripslashes($modSettings['YASM_' . $name . '_text'])) : $text;
 		$show = empty($show) ? (empty($modSettings['YASM_' . $name . '_show']) ? $txt['YASM_show'] : stripslashes($modSettings['YASM_' . $name . '_show'])) : $show;
 		$hide = empty($hide) ? (empty($modSettings['YASM_' . $name . '_hide']) ? $txt['YASM_hide'] : stripslashes($modSettings['YASM_' . $name . '_hide'])) : $hide;
-		$expand = ($expand == 'y' || $expand == 'yes' || $expand == 'true' || !empty($modSettings['YASM_' . $name . '_expanded']));
+		$expand = empty($expand) ? !empty($modSettings['YASM_' . $name . '_expanded']) : ($expand == 'y' || $expand == 'yes' || $expand == 'true');
+		$show_log = $log_id && !empty($modSettings['YASM_' . $name . '_show_log']);
 
 		// Are we allowed to log users who viewed the contents?
-		$limit = 0;
-		if (!empty($log) && ($members = cache_get_data('YASM_viewed_log' . $log, 86400)) == NULL)
-		{
-			$members = YASM_Get_Members($log, 0, $limit);
-			cache_put_data('YASM_viewed_log' . $log, $members, 86400);
-		}
-		$count = isset($members) ? count($members) : 0;
+		$limit = !empty($modSettings['YASM_' . $name . '_limit_log']) ? $modSettings['YASM_' . $name . '_limit_log'] : 0;
+		if (empty($log_id))
+			$context['YASM_users'] = array();
+		elseif (($context['YASM_users'] = cache_get_data('YASM_viewed_log_' . $log_id, 86400)) == NULL)
+			YASM_Get_Members($log_id, $limit);
+		$count = isset($context['YASM_users']) ? count($context['YASM_users']) : 0;
 		$viewed = sprintf($txt[$limit <= $count ? 'YASM_viewed_by' : 'YASM_last_viewed'], min(max(1, $limit), $count));
+
+		// If expanded and not logged, then log the user and add to the list:
+		if ($log_id && $expand && !isset($context['YASM_users'][$user_info['id']]))
+		{
+			YASM_Add_Member($log_id, $user_info['id'], false);
+			if ($show_log)
+			{
+				// Move user to front of the list, as user is most recent to view:
+				YASM_Get_Members($log_id, 0, $user_info['id']);
+				$tmp = $context['YASM_users'][$user_info['id']];
+				unset($context['YASM_users'][$user_info['id']]);
+				$context['YASM_users'] = array_shift($context['YASM_users']);
+				array_splice($context['YASM_users'], 0, 0, $tmp);
+			}
+			$log_id = 0;
+		}
 
 		// We need to parse the contents so it is readable for the user:
 		$data = parse_bbc($data);
 	}
 
 	// Build the string we are going to show the user.  The Easy-To-Read edition! :p
-	$style = empty($modSettings['YASM_' . $name . '_style']) ? 'YASM_original' : $modSettings['YASM_' . $name . '_style'];
+	$style = 'YASM_' . (empty($modSettings['YASM_' . $name . '_style']) ? 'original' : $modSettings['YASM_' . $name . '_style']);
 	$tag['content'] =
 		'<div class="' . $style . '">' .
-			'<div class="YASM_inner' . (empty($modSettings['YASM_' . $name . '_no_border']) ? ' YASM_border' : '') . '">' .
-				'<span class="YASM_text">' . (!empty($message) ? $message : $text . '</span> ' .
-				(!empty($quote) ? '<span class="YASM_quote">'. $quote . '</span> ' : '') .
-				'<span class="YASM_links" onClick="YASM_toggle(this, ' . $log . '); return false;" />' .
-					'<a href="#" onClick="return false;"' . ($expand ? ' style="display:none"' : '') . '>' . $show . '</a>' .
-					'<a href="#" onClick="return false;"' . (!$expand ? ' style="display:none"' : '') . '>' . $hide . '</a>') .
+			'<div class="YASM_inner' . (empty($message) && empty($modSettings['YASM_' . $name . '_no_border']) ? ' YASM_border' : '') . '">' .
+				'<span class="YASM_text">' . (!empty($message) ? $message : $text .
+				(!empty($quote) ? '<span class="YASM_quote">'. $quote . '</span> ' : '') . '</span><span class="YASM_colon">:</span> ' .
+				'<span class="YASM_links" onClick="YASM_toggle(this, ' . ((int) $log_id) . '); return false;" />' .
+					'<a href="#" onClick="return false;"' . ($expand ? ' style="display:none;"' : '') . '>' . $show . '</a>' .
+					'<a href="#" onClick="return false;"' . (!$expand ? ' style="display:none;"' : '') . '>' . $hide . '</a>') .
 				'</span>' .
-			'</div>' .
+			'</div>' . (empty($message) ?
 			'<div class="YASM_content quotecontent">' .
-				'<div'. ($expand && empty($message) ? '' : ' style="display: none') . ';">' .
-					'$1' . (!empty($members) ?
+				'<div'. ($expand ? '' : ' style="display: none;"') . '>' .
+					'$1' . (!empty($count) && $show_log ?
 					'<hr class="clear" />' .
-					'<span class="YASM_log">' . $viewed . ': <span class="YASM_members">' . implode(', ', $members) . '</span></span>' : '') .
+					'<span class="YASM_log">' . $viewed . ': <span class="YASM_users">' . implode(', ', $context['YASM_users']) . '</span></span>' : '') .
 				'</div>' .
-			'</div>' .
+			'</div>' : '') .
 		'</div>';
+
+	// Let's free up the context entry for users viewed:
+	unset($context['YASM_users']);
 }
 
 /**********************************************************************************
@@ -193,9 +229,9 @@ function YASM_Admin(&$areas)
 	$areas['config']['areas']['modsettings']['subsections']['YASM'] = array('YASM');
 }
 
-function YASM_Modify(&$actions)
+function YASM_Modify(&$is_actions)
 {
-	$actions['YASM'] = 'YASM_Settings';
+	$is_actions['YASM'] = 'YASM_Settings';
 }
 
 function YASM_Settings($return_config = false)
@@ -203,16 +239,18 @@ function YASM_Settings($return_config = false)
 	global $txt, $scripturl, $context, $settings, $sc, $modSettings;
 
 	// Now, the settings....
-	foreach (YASM_tags() as $id => $tag)
+	foreach (YASM_tags() as $tag)
 	{
 		$config_vars[] = array('title', $tag);
 		$config_vars[] = array('select', 'YASM_' . $tag . '_style', $txt['YASM_styles']);
-		$config_vars[] = array('text', 'YASM_' . $tag .'_text');
-		$config_vars[] = array('text', 'YASM_' . $tag .'_show');
-		$config_vars[] = array('text', 'YASM_' . $tag .'_hide');
+		$config_vars[] = array('text', 'YASM_' . $tag .'_text', 40);
+		$config_vars[] = array('text', 'YASM_' . $tag .'_show', 40);
+		$config_vars[] = array('text', 'YASM_' . $tag .'_hide', 40);
 		$config_vars[] = array('check', 'YASM_' . $tag . '_expanded');
 		$config_vars[] = array('check', 'YASM_' . $tag . '_no_guests');
 		$config_vars[] = array('check', 'YASM_' . $tag . '_no_border');
+		$config_vars[] = array('check', 'YASM_' . $tag . '_show_log');
+		$config_vars[] = array('int', 'YASM_' . $tag . '_limit_log');
 	}
 
 	if ($return_config)
@@ -225,7 +263,7 @@ function YASM_Settings($return_config = false)
 	if (isset($_GET['save']))
 	{
 		checkSession();
-		foreach (YASM_tags() as $id => $tag)
+		foreach (YASM_tags() as $tag)
 		{
 			$_POST['YASM_' . $tag . '_text'] = isset($_POST['YASM_' . $tag . '_text']) ? addslashes($_POST['YASM_' . $tag . '_text']) : '';
 			$_POST['YASM_' . $tag . '_show'] = isset($_POST['YASM_' . $tag . '_show']) ? addslashes($_POST['YASM_' . $tag . '_show']) : '';
@@ -236,8 +274,16 @@ function YASM_Settings($return_config = false)
 	}
 
 	// Prepare the strings to be seen by the user for modification:
-	foreach (YASM_tags() as $id => $tag)
+	$search = array('{show}', '{hide}', '{tag_name}');
+	$replace = array($txt['YASM_show'], $txt['YASM_hide'], '{tag_name}');
+	foreach (YASM_tags() as $tag)
 	{
+		// Build the language strings we need from the generic templates:
+		$replace[2] = $txt[$tag];
+		foreach ($txt['YASM_strings'] as $name => $text)
+			$txt['YASM_' . $tag . '_' . $name] = str_replace($search, $replace, $text);
+
+		// Strip slashes from database text strings:
 		if (!empty($modSettings['YASM_' . $tag . '_text']))
 			$modSettings['YASM_' . $tag . '_text'] = stripslashes($modSettings['YASM_' . $tag . '_text']);
 		if (!empty($modSettings['YASM_' . $tag . '_show']))
@@ -249,32 +295,62 @@ function YASM_Settings($return_config = false)
 }
 
 /**********************************************************************************
-/* YASM "viewed spoiler" logging functions:
+/* Functions dealing with getting/adding/deleting user viewership logs:
 **********************************************************************************/
-function YASM_Actions(&$actions)
+function YASM_Add_Member($log_id = -1, $id_member = -1, $is_action = true, $msg_id = 0)
 {
-	$actions['YASM_log'] = array('Subs-YASM.php', 'YASM_Insert_Member');
+	global $smcFunc, $user_info, $context;
+
+	if ($is_action)
+	{
+		// DIE if user is a guest or no log ID provided:
+		$log_id = !empty($_GET['id']) ? $_GET['id'] : -1;
+		if (!empty($user_info['is_guest']) || $log_id < 1)
+			die;
+
+		// DIE if the user is already on the list:
+		$id_member = $user_info['id'];
+		if (!isset($context['YASM_users']) && ($context['YASM_users'] = cache_get_data('YASM_viewed_log_' . $log_id, 86400)) == NULL)
+			YASM_Get_Members($log_id);
+		if (in_array($id_member, array_keys($context['YASM_users'])))
+			die;
+	}
+
+	// Insert user ID and spoiler ID into the table:
+	$smcFunc['db_insert']('',
+		'{db_prefix}log_viewed_tag',
+		array('id_member' => 'int', 'id_spoiler' => 'int', 'time' => 'int', 'id_msg'),
+		array((int) $id_member, (int) $log_id, time(), (int) $msg_id),
+		array()
+	);
+	cache_put_data('YASM_viewed_log_' . $log_id, NULL, 86400);
+
+	// DIE if we were called as an action:
+	if ($is_action)
+		die;
 }
 
-function YASM_Get_Members($log_id, $start = 0, $limit = 0)
+function YASM_Get_Members($log_id, $limit = 0, $id_member = 0)
 {
-	global $smcFunc, $scripturl;
+	global $smcFunc, $scripturl, $user_info, $context;
 
-	$members = array();
+	// Get list of users having viewed the log, with most recent views first:
 	$request = $smcFunc['db_query']('', '
 		SELECT
 			mem.id_member, mem.real_name, mg.online_color
 		FROM {db_prefix}log_viewed_tag AS tag
 			LEFT JOIN {db_prefix}members AS mem ON (mem.id_member = tag.id_member)
-			LEFT JOIN {db_prefix}membergroups AS mg ON (mg.id_group = CASE WHEN mem.id_group = {int:reg_member_group} THEN mem.id_post_group ELSE mem.id_group END)
-		WHERE tag.id_spoiler = {int:id_spoiler}
-		ORDER BY tag.time DESC' . (max(0, $limit) > 0 ? '
-		LIMIT {int:start}, {int:limit}' : ''),
+			LEFT JOIN {db_prefix}membergroups AS mg ON (mg.id_group = CASE WHEN mem.id_group = {int:reg_user_group} THEN mem.id_post_group ELSE mem.id_group END)
+		WHERE tag.id_spoiler = {int:id_spoiler}' . (!empty($id_member) ? '
+			AND tag.id_member = {int:id_member}' : '
+			AND tag.id_member > {int:id_member}') . '
+		ORDER BY tag.time DESC' . (!empty($limit) ? '
+		LIMIT {int:limit}' : ''),
 		array(
-			'id_spoiler' => $log_id,
-			'reg_member_group' => 0,
-			'start' => $start,
-			'limit' => $limit,
+			'id_spoiler' => (int) $log_id,
+			'reg_user_group' => 0,
+			'id_member' => (int) $id_member,
+			'limit' => (int) $limit,
 		)
 	);
 	while ($row = $smcFunc['db_fetch_assoc']($request))
@@ -282,74 +358,74 @@ function YASM_Get_Members($log_id, $start = 0, $limit = 0)
 		if (empty($row['id_member']))
 			continue;
 		if (!empty($row['online_color']))
-			$members[$row['id_member']] = '<a href="' . $scripturl . '?action=profile;u=' . $row['id_member'] . '" style="color: ' . $row['online_color'] . ';">' . $row['real_name'] . '</a>';
+			$context['YASM_users'][$row['id_member']] = '<a href="' . $scripturl . '?action=profile;u=' . $row['id_member'] . '" style="color: ' . $row['online_color'] . ';">' . $row['real_name'] . '</a>';
 		else
-			$members[$row['id_member']] = '<a href="' . $scripturl . '?action=profile;u=' . $row['id_member'] . '">' . $row['real_name'] . '</a>';
+			$context['YASM_users'][$row['id_member']] = '<a href="' . $scripturl . '?action=profile;u=' . $row['id_member'] . '">' . $row['real_name'] . '</a>';
 	}
 	$smcFunc['db_free_result']($request);
-	return $members;
-}
-
-function YASM_Insert_Member($log_id = -1, $id_member = -1)
-{
-	global $smcFunc, $user_info;
-
-	if (($check_id = $id_member) == -1)
-	{
-		// DIE if user is a guest or no log ID provided:
-		$log_id = !empty($_GET['id']) ? $_GET['id'] : -1;
-		if (!empty($user_info['is_guest']) || $log_id < 1)
-			die;
-
-		// DIE if the member is already on the list:
-		$members = YASM_Get_Members($log_id);
-		if (in_array($id_member = $user_info['id'], array_keys($members)))
-			die;
-	}
-
-	// Insert user ID and spoiler ID into the table:
-	$smcFunc['db_insert']('',
-		'{db_prefix}log_viewed_tag',
-		array('id_member' => 'int', 'id_spoiler' => 'int', 'time' => 'int'),
-		array($id_member, $log_id, time()),
-		array()
-	);
-	cache_put_data('YASM_viewed_log' . $log_id, NULL, 86400);
-
-	// DIE if we were called as an action:
-	if ($check_id == -1)
-		die;
-}
-
-function YASM_Insert_Spoiler($log_id = -1)
-{
-	$request = $smcFunc['db_query']('', '
-		SELECT MAX(id_spoiler)
-		FROM {db_prefix}log_viewed_tag AS tag',
-		array()
-	);
-	list($next) = $smcFunc['db_fetch_row']($request);
-	$smcFunc['db_free_result']($request);
-	YASM_Insert_Member($next += 1, 0);
-	return $next;
+	cache_put_data('YASM_viewed_log_' . $log_id, $context['YASM_users'], 86400);
 }
 
 /**********************************************************************************
-/* Function which deletes viewed log for specified user:
+/* Functions dealing with spoiler ID creation & deletion:
 **********************************************************************************/
-function YASM_Delete_Member($id_member)
+function YASM_Delete_Spoilers($id_member, $spoilers = array())
 {
 	global $smcFunc, $user_info;
 	if (!empty($id_member))
 	{
+		// Clean up the spoiler ID array, just in case:
+		if (!is_array($spoilers))
+			$spoilers = array($spoilers);
+		foreach ($spoilers as $id => $spoiler)
+			$spoilers[$id] = (int) $spoiler;
+
+		// Delete the spoiler logs for the specified user:
 		$smcFunc['db_query']('', '
 			DELETE FROM {db_prefix}log_viewed_tag
-			WHERE tag.id_member = {int:id_member}',
+			WHERE id_member = {int:id_member}' . (!empty($spoilers) ? '
+				AND id_spoiler IN ({array_int:spoilers})' : ''),
 			array(
-				'id_member' => (int) $id_member
+				'id_member' => (int) $id_member,
+				'spoilers' => $id_spoiler,
 			)
 		);
 	}
+}
+
+function YASM_Insert_Spoiler_ID(&$messages_columns, &$update_parameters, &$msgOptions, &$topicOptions, &$posterOptions, &$messageInts)
+{
+	global $context, $user_info, $smcFunc, $context;
+
+	// If no body is included, return because we have nothing to do:
+	if (empty($messages_columns['body']))
+		return;
+
+	// Need to add spoiler IDs for any spoilers requesting logging:
+	foreach (YASM_tags() as $tag)
+	{
+		$pattern = '#\[' . $tag . ' (((?:.*? )?)(log=(y|yes|true))( ?:.*?)?)\](.+?)\[/' . $tag .'\]#i' . ($context['utf8'] ? 'u' : '');
+		if (preg_match_all($pattern, $messages_columns['body'], $codes, PREG_PATTERN_ORDER))
+		{
+			// Get the next spoiler ID from the database:
+			$request = $smcFunc['db_query']('', '
+				SELECT MAX(id_spoiler)
+				FROM {db_prefix}log_viewed_tag',
+				array()
+			);
+			list($id_spoiler) = $smcFunc['db_fetch_row']($request);
+			$smcFunc['db_free_result']($request);
+			YASM_Add_Member($id_spoiler += 1, $user_info['id'], false);
+
+			// Replace the spoiler logging request with the new spoiler ID:
+			$replacement = str_replace($codes[3], 'log_id=' . $id_spoiler, $codes[0]);
+			$messages_columns['body'] = str_replace($codes[0], $replacement, $messages_columns['body']);
+		}
+	}
+}
+
+function YASM_preparse(&$message)
+{
 }
 
 ?>

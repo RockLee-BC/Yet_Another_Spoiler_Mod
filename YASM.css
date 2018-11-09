@@ -68,15 +68,15 @@
 .YASM_wellwisher .YASM_text
 {
 }
-.YASM_wellwisher .YASM_links
+.YASM_wellwisher .YASM_links a
 {
 	float: right;
 }
-.YASM_wellwisher .YASM_links:before
+.YASM_wellwisher .YASM_links a:before
 {
 	content: "[ ";
 }
-.YASM_wellwisher .YASM_links:after
+.YASM_wellwisher .YASM_links a:after
 {
 	content: " ]";
 }

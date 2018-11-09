@@ -28,6 +28,8 @@ $hook_functions = array(
 	'integrate_modify_modifications' => 'YASM_Modify',
 	'integrate_actions' => 'YASM_Actions',
 	'integrate_delete_member' => 'YASM_Delete_Member',
+// SMF 2.1 Beta 3 hooks
+	'integrate_modify_post' => 'YASM_Insert_Spoiler_ID',
 );
 
 // Adding or removing them?

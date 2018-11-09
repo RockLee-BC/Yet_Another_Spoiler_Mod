@@ -5,8 +5,22 @@ elseif (!defined('SMF'))
 	exit('<b>Error:</b> Cannot install - please verify you put this in the same place as SMF\'s index.php.');
 db_extend('packages');
 
+// Notify user that they must remove the Expandable/Collapsable mod series before installation:
+if (file_exists($sourcedir . '/Subs-BBCode-Changelog.php'))
+	fatal_error('<b>Error:</b> Remove the &quot;Expandable &amp; Collapsable Changelog BBCode&quot; mod first!');
+if (file_exists($sourcedir . '/Subs-BBCode-OffTopic.php'))
+	fatal_error('<b>Error:</b> Remove the &quot;Expandable &amp; Collapsable OffTopic BBCode&quot; mod first!');
+if (file_exists($sourcedir . '/Subs-BBCode-Spoiler.php'))
+	fatal_error('<b>Error:</b> Remove the &quot;Expandable &amp; Collapsable Spoiler BBCode&quot; mod first!');
+
 // Build the bbcodes table:
 $columns = array(
+	array(
+		'name' => 'id_msg',
+		'type' => 'int',
+		'size' => 8,
+		'unsigned' => true,
+	),
 	array(
 		'name' => 'id_member',
 		'type' => 'int',

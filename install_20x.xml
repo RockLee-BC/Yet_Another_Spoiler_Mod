@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+<id>Dougiefresh:YASM</id>
+<name>Yet Another Spoiler Mod</name>
+<version>1.0.1</version>
+
+<file name="$sourcedir/Display.php">
+	<operation>
+		<search position="after"><![CDATA[// Do the censor thang.]]></search>
+		<add><![CDATA[// If so requested, add a logging ID to any YASM tag:
+	YASM_preparse($message);
+
+	]]></add>
+	</operation>
+</file>
+<file name="$sourcedir/Subs-Post.php">
+	<operation>
+		<search position="after"><![CDATA[foreach ($messages_columns as $var => $val)]]></search>
+		<add><![CDATA[YASM_Insert_Spoiler_ID($messages_columns, $update_parameters, $msgOptions, $topicOptions, $posterOptions, $messageInts);
+	
+	]]></add>
+	</operation>
+</file>
+</modification>
